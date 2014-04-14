@@ -269,6 +269,36 @@ minetest.register_chatcommand("remove_area", {
 		minetest.chat_send_player(name, 'Removed area '..id)
 end})
 
+minetest.register_chatcommand("edit_area", {
+	params = "<id>",
+	description = "Edit an area using an id",
+	privs = {},
+	func = function(name, param)
+		local id = tonumber(param)
+		if not id then
+			minetest.chat_send_player(name,
+					"Invalid usage, see /help edit_area")
+			return
+		end
+
+		if not markers then
+			return "This command needs the markers mod"
+		end
+
+		if not areas:isAreaOwner(id, name) then
+			minetest.chat_send_player(name, "Area "..id
+					.." does not exist or"
+					.." is not owned by you")
+			return
+		end
+
+		local player = minetest.get_player_by_name(name)
+		local formspec = markers.get_area_desc_formspec(id, player, player:getpos())
+		minetest.show_formspec(name, "markers:info", formspec)
+		return nil, true
+end})
+
+
 
 minetest.register_chatcommand("change_owner", {
 	params = "<id> <NewOwner>",
