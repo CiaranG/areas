@@ -1,13 +1,4 @@
 
--- Temporary compatibility function - see minetest PR#1180
-if not vector.interpolate then
-	vector.interpolate = function(pos1, pos2)
-		return {x = pos1.x + (pos2.x - pos1.x) * factor,
-		        y = pos1.y + (pos2.y - pos1.y) * factor,
-			z = pos1.z + (pos2.z - pos1.z) * factor}
-		end
-end
-
 
 -- Returns the nearest area to the given position, optionally checking only
 -- areas matching a given pattern (which is a lua regex). The pattern will
