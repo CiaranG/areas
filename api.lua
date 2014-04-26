@@ -32,6 +32,38 @@ function areas:findNearestArea(pos, pattern, maxdist)
 	return nearest, nearestdist
 end
 
+
+-- Find all areas, optionally within a given range, optionally including only
+-- areas matching a given pattern (which is a lua regex). The pattern will
+-- be amended to make it case-insensitive.
+-- Returns a list of matching areas.
+-- maxdist is the maximum distance at which to search.
+function areas:getAreas(pos, pattern, maxdist)
+
+	local list = {}
+	if pattern then
+		-- Make the pattern case-insensitive...
+		pattern = pattern:gsub("(%%?)(.)", function(percent, letter)
+			if percent ~= "" or not letter:match("%a") then
+				return percent .. letter
+			else
+				return string.format("[%s%s]", letter:lower(), letter:upper())
+			end
+		end)
+	end
+	for id, area in pairs(self.areas) do
+		if (not pattern) or string.find(area.name, pattern) then
+			local centre = vector.interpolate(area.pos1, area.pos2, 0.5)
+			local dist = vector.distance(pos, centre)
+			if (not maxdist) or dist <= maxdist then
+				table.insert(list, area)
+			end
+		end
+	end
+	return list
+end
+
+
 -- Returns a list of areas that include the provided position
 function areas:getAreasAtPos(pos)
 	local a = {}
