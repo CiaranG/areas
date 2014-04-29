@@ -21,16 +21,16 @@ subcmd.help = {
         end
 
         local msg = "Subcommands (use /area help <subcmd> for more):"
-	for c, def in pairs(subcmd) do
-	    local has_privs
-	    if def.privs then
-		has_privs, _ = minetest.check_player_privs(playername, def.privs)
-	    else
-		has_privs = true
-	    end
-	    if has_privs then
-		msg = msg.." "..c
-	    end
+    for c, def in pairs(subcmd) do
+        local has_privs
+        if def.privs then
+        has_privs, _ = minetest.check_player_privs(playername, def.privs)
+        else
+        has_privs = true
+        end
+        if has_privs then
+        msg = msg.." "..c
+        end
         end
         return msg, true
     end
@@ -153,6 +153,38 @@ subcmd.add_owner = {
                 "You have been granted control over area #"..
                 id..". Type /list_areas to show your areas.")
         return "Area protected. ID: "..id, true
+    end
+}
+
+subcmd.extend = {
+    params = "<ID> <X>,<Y>,<Z>",
+    desc = "Extend the area by the given amounts",
+    privs = {areas=true},
+    exec = function(name, param)
+        local found, id
+    local xp = {}
+    found, _, id, xp['x'], xp['y'], xp['z'] = param:find("^(%d+) (%-?%d+),(%-?%d+),(%-?%d+)$")
+        if not found then
+            return "Invalid usage, see /area help extend"
+        end
+
+        id = tonumber(id)
+        if not id then
+            return "That area doesn't exist."
+        end
+    local area = areas.areas[id]
+
+    for _, axis in pairs({'x', 'y', 'z'}) do
+        local offset = tonumber(xp[axis])
+        if offset < 0 then
+        area.pos1[axis] = area.pos1[axis] + offset
+        elseif offset > 0 then
+        area.pos2[axis] = area.pos2[axis] + offset
+        end
+    end
+
+        areas:save()
+        return "Area extended.", true
     end
 }
 
@@ -355,6 +387,115 @@ subcmd.open = {
         areas.areas[id].open = open or nil
         areas:save()
         return "Area "..(open and "opened" or "closed")..".", true
+    end
+}
+
+subcmd.select = {
+    params = "<id>",
+    desc = "Select a area by id.",
+    privs = {},
+    exec = function(name, param)
+	local id = tonumber(param)
+	if not id then
+	    return "Invalid usage, see /area help select."
+	end
+	if not areas.areas[id] then
+	    return "The area "..id.." does not exist."
+	end
+
+	areas:setPos1(name, areas.areas[id].pos1)
+	areas:setPos2(name, areas.areas[id].pos2)
+	return "Area "..id.." selected.", true
+    end
+}
+
+subcmd.pos1 = {
+    params = "[X Y Z|X,Y,Z]",
+    desc = "Set area protection region position 1 to your"
+    .." location or the one specified",
+    privs = {},
+    exec = function(name, param)
+	local pos = nil
+	local found, _, x, y, z = param:find(
+	"^(-?%d+)[, ](-?%d+)[, ](-?%d+)$")
+	if found then
+	    pos = {x=tonumber(x), y=tonumber(y), z=tonumber(z)}
+	elseif param == "" then
+	    player = minetest.get_player_by_name(name)
+	    if player then
+		pos = player:getpos()
+	    else
+		return "Unable to get position"
+	    end
+	else
+	    return "Invalid usage, see /area pos1 help"
+	end
+	pos = vector.round(pos)
+	areas:setPos1(name, pos)
+	return "Area position 1 set to "..minetest.pos_to_string(pos), true
+    end
+}
+
+subcmd.pos2 = {
+    params = "[X Y Z|X,Y,Z]",
+    desc = "Set area protection region position 2 to your"
+    .." location or the one specified",
+    privs = {},
+    exec = function(name, param)
+	local pos = nil
+	local found, _, x, y, z = param:find(
+	"^(-?%d+)[, ](-?%d+)[, ](-?%d+)$")
+	if found then
+	    pos = {x=tonumber(x), y=tonumber(y), z=tonumber(z)}
+	elseif param == "" then
+	    player = minetest.get_player_by_name(name)
+	    if player then
+		pos = player:getpos()
+	    else
+		return "Unable to get position"
+	    end
+	else
+	    return "Invalid usage, see /area help pos2"
+	end
+	pos = vector.round(pos)
+	areas:setPos2(name, pos)
+	return "Area position 2 set to "..minetest.pos_to_string(pos), true
+    end
+}
+
+
+subcmd.pos = {
+    params = "set/set1/set2/get",
+    desc = "Set area protection region, position 1, or position 2"
+    .." by punching nodes, or display the region",
+    privs = {},
+    exec = function(name, param)
+	if param == "set" then
+	    areas.set_pos[name] = "pos1"
+	    return "Select positions by punching two nodes", true
+	elseif param == "set1" then
+	    areas.set_pos[name] = "pos1only"
+	    return "Select position 1 by punching a node", true
+	elseif param == "set2" then
+	    areas.set_pos[name] = "pos2"
+	    return "Select position 2 by punching a node", true
+	elseif param == "get" then
+	    if areas.pos1[name] ~= nil then
+		minetest.chat_send_player(name, "Position 1: "
+		    ..minetest.pos_to_string(areas.pos1[name]))
+	    else
+		minetest.chat_send_player(name, "Position 1 not set")
+	    end
+	    if areas.pos2[name] ~= nil then
+		minetest.chat_send_player(name, "Position 2: "
+		    ..minetest.pos_to_string(areas.pos2[name]))
+	    else
+		minetest.chat_send_player(name, "Position 2 not set")
+	    end
+	    return None, true
+	else
+	    return "Unknown subcommand: "..param
+	end
     end
 }
 
