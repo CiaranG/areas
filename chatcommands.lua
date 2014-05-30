@@ -1,5 +1,4 @@
 
-
 -- All chat commands are defined by simply adding the handler function to
 -- this table. The handler receives the name of the player and the command
 -- arguments, and it should return:
@@ -44,10 +43,8 @@ subcmd.protect = {
         if param == "" then
             return false, 'Invalid usage, see /area help protect'
         end
-        local pos1, pos2 = areas:getPos1(name), areas:getPos2(name)
-        if pos1 and pos2 then
-            pos1, pos2 = areas:sortPos(pos1, pos2)
-        else
+        local pos1, pos2 = areas:getPos(name)
+        if not (pos1 and pos2) then
             return false, 'You need to select an area first'
         end
 
@@ -82,10 +79,8 @@ subcmd.set_owner = {
             return false, "Incorrect usage, see /area help set_owner"
         end
 
-        local pos1, pos2 = areas:getPos1(name), areas:getPos2(name)
-        if pos1 and pos2 then
-            pos1, pos2 = areas:sortPos(pos1, pos2)
-        else
+        local pos1, pos2 = areas:getPos(name)
+        if not (pos1 and pos2) then
             return false, "You need to select an area first"
         end
 
@@ -123,10 +118,8 @@ subcmd.add_owner = {
             return false, "Incorrect usage, see /area help add_owner"
         end
 
-        local pos1, pos2 = areas:getPos1(name), areas:getPos2(name)
-        if pos1 and pos2 then
-            pos1, pos2 = areas:sortPos(pos1, pos2)
-        else
+        local pos1, pos2 = areas:getPos(name)
+        if not (pos1 and pos2) then
             return false, 'You need to select an area first'
         end
 
