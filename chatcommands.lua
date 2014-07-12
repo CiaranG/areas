@@ -71,7 +71,7 @@ subcmd.set_owner = {
     desc = "Protect an area between two positions and give"
         .." a player access to it without setting the parent of the"
         .." area to any existing area",
-    privs = {areas=true},
+    privs = {areas.adminPrivs},
     exec = function(name, param)
         local found, _, ownername, areaname = param:find('^([^ ]+) (.+)$')
 
@@ -152,7 +152,7 @@ subcmd.add_owner = {
 subcmd.extend = {
     params = "<ID> <X>,<Y>,<Z>",
     desc = "Extend the area by the given amounts. Negative amounts extend at the 'other' end.",
-    privs = {areas=true},
+    privs = {areas.adminPrivs},
     exec = function(name, param)
         local found, id
     local xp = {}
@@ -184,7 +184,7 @@ subcmd.extend = {
 subcmd.shrink = {
     params = "<ID> <X>,<Y>,<Z>",
     desc = "Shrink the area by the given amounts. Negative amounts shrink at the 'other' end.",
-    privs = {areas=true},
+    privs = {areas.adminPrivs},
     exec = function(name, param)
         local found, id
     local xp = {}
@@ -281,7 +281,7 @@ subcmd.list = {
     desc = "List your areas, or all areas if you are an admin.",
     privs = {},
     exec = function(name, param)
-        local admin = minetest.check_player_privs(name, {areas=true})
+        local admin = minetest.check_player_privs(name, {areas.adminPrivs})
         if admin then
             minetest.chat_send_player(name,
                     "Showing all areas.")
