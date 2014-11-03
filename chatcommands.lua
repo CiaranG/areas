@@ -24,9 +24,9 @@ subcmd.help = {
     for c, def in pairs(subcmd) do
         local has_privs
         if def.privs then
-        has_privs, _ = minetest.check_player_privs(playername, def.privs)
+            has_privs, _ = minetest.check_player_privs(playername, def.privs)
         else
-        has_privs = true
+            has_privs = true
         end
         if has_privs then
         msg = msg.." "..c
@@ -158,7 +158,7 @@ subcmd.add_owner = {
 
 subcmd.extend = {
     params = "<ID> <X>,<Y>,<Z>",
-    desc = "Extend the area by the given amounts",
+    desc = "Extend the area by the given amounts. Negative amounts extend at the 'other' end.",
     privs = {areas=true},
     exec = function(name, param)
         local found, id
@@ -177,14 +177,52 @@ subcmd.extend = {
     for _, axis in pairs({'x', 'y', 'z'}) do
         local offset = tonumber(xp[axis])
         if offset < 0 then
-        area.pos1[axis] = area.pos1[axis] + offset
+            area.pos1[axis] = area.pos1[axis] + offset
         elseif offset > 0 then
-        area.pos2[axis] = area.pos2[axis] + offset
+            area.pos2[axis] = area.pos2[axis] + offset
         end
     end
 
-        areas:save()
-        return "Area extended.", true
+    areas:save()
+    return "Area extended.", true
+    end
+}
+
+subcmd.shrink = {
+    params = "<ID> <X>,<Y>,<Z>",
+    desc = "Shrink the area by the given amounts. Negative amounts shrink at the 'other' end.",
+    privs = {areas=true},
+    exec = function(name, param)
+        local found, id
+    local xp = {}
+    found, _, id, xp['x'], xp['y'], xp['z'] = param:find("^(%d+) (%-?%d+),(%-?%d+),(%-?%d+)$")
+        if not found then
+            return "Invalid usage, see /area help shrink"
+        end
+
+        id = tonumber(id)
+        if not id then
+            return "That area doesn't exist."
+        end
+    local area = areas.areas[id]
+
+    for _, axis in pairs({'x', 'y', 'z'}) do
+        local offset = tonumber(xp[axis])
+        if offset < 0 then
+            area.pos1[axis] = area.pos1[axis] - offset
+            if area.pos1[axis] > area.pos2[axis] then
+                area.pos1[axis] = area.pos2[axis]
+            end
+        elseif offset > 0 then
+            area.pos2[axis] = area.pos2[axis] - offset
+            if area.pos2[axis] < area.pos1[axis] then
+                area.pos2[axis] = area.pos2[axis]
+            end
+        end
+    end
+
+    areas:save()
+    return "Area shrunk.", true
     end
 }
 
@@ -506,7 +544,7 @@ minetest.register_chatcommand("area", {
 
         local cmd, args
         cmd, args = string.match(param, "^([^ ]+)(.*)")
-        if not cmd then return subcmd.help.exec() end
+        if not cmd then return subcmd.help.exec(name, nil) end
 
         if subcmd[cmd] then
 
