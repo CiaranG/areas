@@ -3,8 +3,8 @@
 -- All chat commands are defined by simply adding the handler function to
 -- this table. The handler receives the name of the player and the command
 -- arguments, and it should return:
---  1. reply message (or nil)
---  2. success status (true or false)
+--  1. success status (true or false)
+--  2. reply message (or nil)
 local subcmd = {}
 
 subcmd.help = {
@@ -14,10 +14,10 @@ subcmd.help = {
 
         if args and args ~= "" then
             if not subcmd[args] then
-                return "No such subcommand"
+                return false, "No such subcommand"
             end
-            return "/area "..args.." "..subcmd[args].params.." - "..
-                subcmd[args].desc, true
+            return true, "/area "..args.." "..subcmd[args].params.." - "..
+                subcmd[args].desc
         end
 
         local msg = "Subcommands (use /area help <subcmd> for more):"
@@ -32,7 +32,7 @@ subcmd.help = {
         msg = msg.." "..c
         end
         end
-        return msg, true
+        return true, msg
     end
 }
 
@@ -42,13 +42,13 @@ subcmd.protect = {
     privs = {[areas.self_protection_privilege]=true},
     exec = function(name, param)
         if param == "" then
-            reutrn 'Invalid usage, see /area help protect'
+            return false, 'Invalid usage, see /area help protect'
         end
         local pos1, pos2 = areas:getPos1(name), areas:getPos2(name)
         if pos1 and pos2 then
             pos1, pos2 = areas:sortPos(pos1, pos2)
         else
-            return 'You need to select an area first'
+            return false, 'You need to select an area first'
         end
 
         minetest.log("action", "/area protect invoked, owner="..name..
@@ -58,13 +58,13 @@ subcmd.protect = {
 
         local canAdd, errMsg = areas:canPlayerAddArea(pos1, pos2, name)
         if not canAdd then
-            return "You can't protect that area: "..errMsg
+            return false, "You can't protect that area: "..errMsg
         end
 
         local id = areas:add(name, param, pos1, pos2, nil)
         areas:save()
 
-        return "Area protected. ID: "..id, true
+        return false, "Area protected. ID: "..id, true
     end
 }
 
@@ -79,18 +79,18 @@ subcmd.set_owner = {
         local found, _, ownername, areaname = param:find('^([^ ]+) (.+)$')
 
         if not found then
-            return "Incorrect usage, see /area help set_owner"
+            return false, "Incorrect usage, see /area help set_owner"
         end
 
         local pos1, pos2 = areas:getPos1(name), areas:getPos2(name)
         if pos1 and pos2 then
             pos1, pos2 = areas:sortPos(pos1, pos2)
         else
-            return "You need to select an area first"
+            return false, "You need to select an area first"
         end
 
         if not areas:player_exists(ownername) then
-            return "The player '"..ownername.."' does not exist"
+            return false, "The player '"..ownername.."' does not exist"
         end
 
         minetest.log("action", name.." runs /set_owner. Owner = "..ownername..
@@ -104,7 +104,7 @@ subcmd.set_owner = {
         minetest.chat_send_player(ownername,
                 "You have been granted control over area #"..
                 id..". Type /list_areas to show your areas.")
-        return  "Area protected. ID: "..id, true
+        return true, "Area protected. ID: "..id
     end
 }
 
@@ -120,18 +120,18 @@ subcmd.add_owner = {
                 = param:find('^(%d+) ([^ ]+) (.+)$')
 
         if not found then
-            return "Incorrect usage, see /area help add_owner"
+            return false, "Incorrect usage, see /area help add_owner"
         end
 
         local pos1, pos2 = areas:getPos1(name), areas:getPos2(name)
         if pos1 and pos2 then
             pos1, pos2 = areas:sortPos(pos1, pos2)
         else
-            return 'You need to select an area first'
+            return false, 'You need to select an area first'
         end
 
         if not areas:player_exists(ownername) then
-            return 'The player "'..ownername..'" does not exist'
+            return false, 'The player "'..ownername..'" does not exist'
         end
 
         minetest.log("action", name.." runs /add_owner. Owner = "..ownername..
@@ -143,7 +143,7 @@ subcmd.add_owner = {
         pid = tonumber(pid)
         if (not areas:isAreaOwner(pid, name)) or
            (not areas:isSubarea(pos1, pos2, pid)) then
-            return "You can't protect that area"
+            return false, "You can't protect that area"
         end
 
         local id = areas:add(ownername, areaname, pos1, pos2, pid)
@@ -152,7 +152,7 @@ subcmd.add_owner = {
         minetest.chat_send_player(ownername,
                 "You have been granted control over area #"..
                 id..". Type /list_areas to show your areas.")
-        return "Area protected. ID: "..id, true
+        return true, "Area protected. ID: "..id
     end
 }
 
@@ -165,12 +165,12 @@ subcmd.extend = {
     local xp = {}
     found, _, id, xp['x'], xp['y'], xp['z'] = param:find("^(%d+) (%-?%d+),(%-?%d+),(%-?%d+)$")
         if not found then
-            return "Invalid usage, see /area help extend"
+            return false, "Invalid usage, see /area help extend"
         end
 
         id = tonumber(id)
         if not id then
-            return "That area doesn't exist."
+            return false, "That area doesn't exist."
         end
     local area = areas.areas[id]
 
@@ -184,7 +184,7 @@ subcmd.extend = {
     end
 
     areas:save()
-    return "Area extended.", true
+    return true, "Area extended."
     end
 }
 
@@ -197,12 +197,12 @@ subcmd.shrink = {
     local xp = {}
     found, _, id, xp['x'], xp['y'], xp['z'] = param:find("^(%d+) (%-?%d+),(%-?%d+),(%-?%d+)$")
         if not found then
-            return "Invalid usage, see /area help shrink"
+            return false, "Invalid usage, see /area help shrink"
         end
 
         id = tonumber(id)
         if not id then
-            return "That area doesn't exist."
+            return false, "That area doesn't exist."
         end
     local area = areas.areas[id]
 
@@ -222,7 +222,7 @@ subcmd.shrink = {
     end
 
     areas:save()
-    return "Area shrunk.", true
+    return true, "Area shrunk."
     end
 }
 
@@ -233,21 +233,21 @@ subcmd.rename = {
     exec = function(name, param)
         local found, _, id, newName = param:find("^(%d+) (.+)$")
         if not found then
-            return "Invalid usage, see /area help rename"
+            return false, "Invalid usage, see /area help rename"
         end
 
         id = tonumber(id)
         if not id then
-            return "That area doesn't exist."
+            return false, "That area doesn't exist."
         end
 
         if not areas:isAreaOwner(id, name) then
-            return "You don't own that area."
+            return false, "You don't own that area."
         end
 
         areas.areas[id].name = newName
         areas:save()
-        return "Area renamed.", true
+        return true, "Area renamed."
     end
 }
 
@@ -257,7 +257,7 @@ subcmd.find = {
     privs = {},
     exec = function(name, param)
         if param == "" then
-            return "A regular expression is required."
+            return false, "A regular expression is required."
         end
 
         -- Check expression for validity
@@ -265,7 +265,7 @@ subcmd.find = {
             ("Test [1]: Player (0,0,0) (0,0,0)"):find(param)
         end
         if not pcall(testRegExp) then
-            return "Invalid regular expression."
+            return false, "Invalid regular expression."
         end
 
         local found = false
@@ -277,9 +277,9 @@ subcmd.find = {
             end
         end
         if not found then
-            return "No matches found", true
+            return true, "No matches found"
         end
-        return None, true
+        return true, None
     end
 }
 
@@ -302,7 +302,7 @@ subcmd.list = {
                         areas:toString(id))
             end
         end
-        return None, True
+        return true, nil
     end
 }
 
@@ -313,18 +313,18 @@ subcmd.recursive_remove = {
     exec = function(name, param)
         local id = tonumber(param)
         if not id then
-            return "Invalid usage, see /area help recursive_remove"
+            return false, "Invalid usage, see /area help recursive_remove"
         end
 
         if not areas:isAreaOwner(id, name) then
-            return "Area "..id
+            return false, "Area "..id
                     .." does not exist or is"
                     .." not owned by you."
         end
 
         areas:remove(id, true)
         areas:save()
-        return "Removed area "..id.." and it's sub areas.", true
+        return true, "Removed area "..id.." and it's sub areas."
     end
 }
 
@@ -335,18 +335,18 @@ subcmd.remove = {
     exec = function(name, param)
         local id = tonumber(param)
         if not id then
-            return "Invalid usage, see /area help remove"
+            return false, "Invalid usage, see /area help remove"
         end
 
         if not areas:isAreaOwner(id, name) then
-            return "Area "..id
+            return false, "Area "..id
                     .." does not exist or"
                     .." is not owned by you"
         end
 
         areas:remove(id)
         areas:save()
-        return 'Removed area '..id, true
+        return true, 'Removed area '..id
     end
 }
 
@@ -357,22 +357,22 @@ subcmd.edit = {
     exec = function(name, param)
         local id = tonumber(param)
         if not id then
-            return "Invalid usage, see /area help edit"
+            return false, "Invalid usage, see /area help edit"
         end
 
         if not markers then
-            return "This command needs the markers mod"
+            return false, "This command needs the markers mod"
         end
 
         if not areas:isAreaOwner(id, name) then
-            return "Area "..id.." does not exist or"
+            return false, "Area "..id.." does not exist or"
                     .." is not owned by you"
         end
 
         local player = minetest.get_player_by_name(name)
         local formspec = markers.get_area_desc_formspec(id, player, player:getpos())
         minetest.show_formspec(name, "markers:info", formspec)
-        return nil, true
+        return true, nil
     end
 }
 
@@ -385,23 +385,23 @@ subcmd.change_owner = {
                 param:find('^(%d+) ([^ ]+)$')
 
         if not found then
-            return "Invalid usage, see /area help change_owner"
+            return false, "Invalid usage, see /area help change_owner"
         end
         
         if not areas:player_exists(new_owner) then
-            return 'The player "'..new_owner..'" does not exist'
+            return false, 'The player "'..new_owner..'" does not exist'
         end
 
         id = tonumber(id)
         if not areas:isAreaOwner(id, name) then
-            return "Area "..id.." does not exist"
+            return false, "Area "..id.." does not exist"
                     .." or is not owned by you."
         end
         areas.areas[id].owner = new_owner
         areas:save()
         minetest.chat_send_player(new_owner,
                 name..'" has given you control over an area.')
-        return 'Owner changed.', true
+        return true, 'Owner changed.'
     end
 }
 
@@ -413,18 +413,18 @@ subcmd.open = {
         local id = tonumber(param)
 
         if not id then
-            return "Invalid usage, see /area help open"
+            return false, "Invalid usage, see /area help open"
         end
 
         if not areas:isAreaOwner(id, name) then
-            return "Area "..id.." does not exist"
+            return false, "Area "..id.." does not exist"
                     .." or is not owned by you."
         end
         local open = not areas.areas[id].open
         -- Save false as nil to avoid inflating the DB.
         areas.areas[id].open = open or nil
         areas:save()
-        return "Area "..(open and "opened" or "closed")..".", true
+        return true, "Area "..(open and "opened" or "closed").."."
     end
 }
 
@@ -435,15 +435,15 @@ subcmd.select = {
     exec = function(name, param)
 	local id = tonumber(param)
 	if not id then
-	    return "Invalid usage, see /area help select."
+	    return false, "Invalid usage, see /area help select."
 	end
 	if not areas.areas[id] then
-	    return "The area "..id.." does not exist."
+	    return false, "The area "..id.." does not exist."
 	end
 
 	areas:setPos1(name, areas.areas[id].pos1)
 	areas:setPos2(name, areas.areas[id].pos2)
-	return "Area "..id.." selected.", true
+	return true, "Area "..id.." selected."
     end
 }
 
@@ -463,14 +463,14 @@ subcmd.pos1 = {
 	    if player then
 		pos = player:getpos()
 	    else
-		return "Unable to get position"
+		return false, "Unable to get position"
 	    end
 	else
-	    return "Invalid usage, see /area pos1 help"
+	    return false, "Invalid usage, see /area pos1 help"
 	end
 	pos = vector.round(pos)
 	areas:setPos1(name, pos)
-	return "Area position 1 set to "..minetest.pos_to_string(pos), true
+	return true, "Area position 1 set to "..minetest.pos_to_string(pos)
     end
 }
 
@@ -490,14 +490,14 @@ subcmd.pos2 = {
 	    if player then
 		pos = player:getpos()
 	    else
-		return "Unable to get position"
+		return false, "Unable to get position"
 	    end
 	else
-	    return "Invalid usage, see /area help pos2"
+	    return false, "Invalid usage, see /area help pos2"
 	end
 	pos = vector.round(pos)
 	areas:setPos2(name, pos)
-	return "Area position 2 set to "..minetest.pos_to_string(pos), true
+	return true, "Area position 2 set to "..minetest.pos_to_string(pos)
     end
 }
 
@@ -510,13 +510,13 @@ subcmd.pos = {
     exec = function(name, param)
 	if param == "set" then
 	    areas.set_pos[name] = "pos1"
-	    return "Select positions by punching two nodes", true
+	    return true, "Select positions by punching two nodes"
 	elseif param == "set1" then
 	    areas.set_pos[name] = "pos1only"
-	    return "Select position 1 by punching a node", true
+	    return true, "Select position 1 by punching a node"
 	elseif param == "set2" then
 	    areas.set_pos[name] = "pos2"
-	    return "Select position 2 by punching a node", true
+	    return true, "Select position 2 by punching a node"
 	elseif param == "get" then
 	    if areas.pos1[name] ~= nil then
 		minetest.chat_send_player(name, "Position 1: "
@@ -530,9 +530,9 @@ subcmd.pos = {
 	    else
 		minetest.chat_send_player(name, "Position 2 not set")
 	    end
-	    return None, true
+	    return true, nil
 	else
-	    return "Unknown subcommand: "..param
+	    return false, "Unknown subcommand: "..param
 	end
     end
 }
@@ -551,17 +551,17 @@ minetest.register_chatcommand("area", {
             if subcmd.privs then
                 local has_privs, missing_privs = minetest.check_player_privs(name, subcmd.privs)
                 if not has_privs then
-                    return "You don't have permission"
+                    return false, "You don't have permission"
                             .." to run this command (missing privileges: "
                             ..table.concat(missing_privs, ", ")..")"
                 end
             end
 
             if args then args = string.sub(args, 2) end
-            reply, success = subcmd[cmd].exec(name, args)
-            return reply, success
+            success, reply = subcmd[cmd].exec(name, args)
+            return success, reply
         end
-        return "No such area command '"..cmd.."' - see '/area help'"
+        return false, "No such area command '"..cmd.."' - see '/area help'"
 
     end
 
