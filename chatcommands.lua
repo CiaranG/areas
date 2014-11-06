@@ -393,7 +393,8 @@ subcmd.change_owner = {
         areas.areas[id].owner = new_owner
         areas:save()
         minetest.chat_send_player(new_owner,
-                name..'" has given you control over an area.')
+                ("%s has given you control over the area %q (ID %d).")
+                :format(name, areas.areas[id].name, id))
         return true, 'Owner changed.'
     end
 }
