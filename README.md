@@ -1,6 +1,10 @@
 Areas mod for Minetest 0.4.8+
 =============================
 
+Note, this is CiaranG's fork, in which (amongst other things) *all* the
+commands are completely different. And they don't match the documentation
+below. So don't use this unless you know what you're doing!
+
 
 Configuration
 -------------
