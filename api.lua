@@ -1,5 +1,15 @@
 
 
+function areas:getByName(name)
+    local lname = name:lower()
+    for _, area in pairs(self.areas) do
+        if area.name:lower() == lname then
+            return area
+        end
+    end
+    return nil
+end
+
 -- Returns the nearest area to the given position, optionally checking only
 -- areas matching a given pattern (which is a lua regex). The pattern will
 -- be amended to make it case-insensitive.

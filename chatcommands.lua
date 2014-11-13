@@ -276,6 +276,42 @@ subcmd.find = {
     end
 }
 
+subcmd.teleport = {
+    params = "<name>",
+    desc = "Teleport to an area",
+    privs = {"teleport"},
+    exec = function(name, param)
+        if param == "" then
+            return false, "An area name is required."
+        end
+
+        local area = areas:getByName(param)
+        if not area then
+            return false, "No such area as '"..param.."'"
+        end
+        local player = minetest.get_player_by_name(name)
+        if not player then
+            return false, "No such player"
+        end
+        -- Try and find an 'air' location at or above the target
+        -- position, but don't try too hard...
+        -- (and if the block is unloaded, we can't try at all)
+	local pos = vector.interpolate(area.pos1, area.pos2, 0.5)
+        local cn = minetest.get_node(pos).name
+        for i=1, 5 do
+            local nexty = vector.add(pos, {x=0,y=1,z=0})
+            local nn = minetest.get_node(nexty).name
+            if nn == "ignore" or (nn == "air" and cn == "air") then
+                break
+            end
+            pos = nexty
+            cn = nn
+        end
+        player:setpos(pos)
+        return true, "Teleported to "..param
+    end
+}
+
 subcmd.list = {
     params = "",
     desc = "List your areas, or all areas if you are an admin.",
