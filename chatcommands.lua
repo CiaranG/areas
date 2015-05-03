@@ -66,6 +66,41 @@ subcmd.protect = {
 }
 
 
+subcmd.here = {
+    params = "<AreaName>",
+    desc = "Protect the 1x1x1 area at your current location",
+    privs = {[areas.self_protection_privilege]=true},
+    exec = function(name, param)
+        if param == "" then
+            return false, 'Invalid usage, see /area help protect'
+        end
+
+        local pos
+        player = minetest.get_player_by_name(name)
+        if player then
+            pos = player:getpos()
+        else
+            return false, "Unable to get position"
+        end
+	pos = vector.round(pos)
+
+        minetest.log("action", "/area here invoked, owner="..name..
+                " areaname="..param..
+                " pos="..minetest.pos_to_string(pos))
+
+        local canAdd, errMsg = areas:canPlayerAddArea(pos, pos, name)
+        if not canAdd then
+            return false, "You can't protect that area: "..errMsg
+        end
+
+        local id = areas:add(name, param, pos, pos, nil)
+        areas:save()
+
+        return false, "Area protected. ID: "..id, true
+    end
+}
+
+
 subcmd.set_owner = {
     params = "<PlayerName> <AreaName>",
     desc = "Protect an area between two positions and give"
