@@ -48,7 +48,8 @@ end
 -- be amended to make it case-insensitive.
 -- Returns a list of matching areas.
 -- maxdist is the maximum distance at which to search.
-function areas:getAreas(pos, pattern, maxdist)
+-- ids can be set to true to return the ids instead of the actual areas
+function areas:getAreas(pos, pattern, maxdist, ids)
 
 	local list = {}
 	if pattern then
@@ -66,7 +67,11 @@ function areas:getAreas(pos, pattern, maxdist)
 			local centre = vector.interpolate(area.pos1, area.pos2, 0.5)
 			local dist = vector.distance(pos, centre)
 			if (not maxdist) or dist <= maxdist then
-				table.insert(list, area)
+                                if ids then
+				    table.insert(list, id)
+                                else
+				    table.insert(list, area)
+                                end
 			end
 		end
 	end
